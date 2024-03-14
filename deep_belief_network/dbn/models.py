@@ -266,13 +266,13 @@ class UnsupervisedDBN(BaseEstimator, TransformerMixin, BaseModel):
 
         # Fit RBM
         if self.verbose:
-            print("[START] Pre-training step:")
+            print("[START] Training step:")
         input_data = X
         for rbm in self.rbm_layers:
             rbm.fit(input_data)
             input_data = rbm.transform(input_data)
         if self.verbose:
-            print("[END] Pre-training step")
+            print("[END] Training step")
         return self
 
     def transform(self, X):
