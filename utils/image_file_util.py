@@ -2,12 +2,23 @@ import pydicom
 from pydicom.pixel_data_handlers.util import apply_voi_lut
 import numpy as np
 import cv2
+from PIL import Image
 
 def load_image(file_path):
     # Muat gambar
     image_cv2 = cv2.imread(file_path)
     img = cv2.cvtColor(image_cv2, cv2.COLOR_BGR2RGB)
     return img
+
+def conv_12bit_to_8bit(file_path, save_as):
+    # Open the 12-bit image
+    image = Image.open(file_path)
+
+    # Convert to 8-bit
+    eight_bit_image = image.convert('L')
+
+    # Save the 8-bit image
+    eight_bit_image.save(save_as)
 
 def save_image_as(filename, buffer):
     # save gambar
