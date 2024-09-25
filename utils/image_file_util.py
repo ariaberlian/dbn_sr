@@ -21,7 +21,9 @@ def conv_12bit_to_8bit(file_path, save_as):
     eight_bit_image.save(save_as)
 
 def save_image_as(filename, buffer):
-    # save gambar
+    buffer = cv2.cvtColor(buffer, cv2.COLOR_RGB2BGR)
+
+    # Save the image
     cv2.imwrite(filename, buffer)
     print(f"Image {filename} has been saved.")
 
