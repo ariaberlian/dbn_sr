@@ -7,4 +7,4 @@
 
 
 ### Problem
-1. Memory leak: setiap epoch semakin lama [solved]
+1. Memory leak: setiap epoch semakin lama
