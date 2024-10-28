@@ -11,9 +11,9 @@ from ..models import BinaryRBM as BaseBinaryRBM
 from ..models import UnsupervisedDBN as BaseUnsupervisedDBN
 from ..utils import batch_generator, to_categorical
 
-
 def close_session():
     sess.close()
+
 
 
 sess = tf.Session()

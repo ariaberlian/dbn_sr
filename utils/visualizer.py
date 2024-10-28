@@ -4,31 +4,31 @@ from matplotlib import gridspec
 import matplotlib.pyplot as plt
 
 
-def visualize_histogram_compare(original_image, reconstruct_image):
+def visualize_histogram_compare(img1, img2, title1='Original Image', title2='Reconstructed Image'):
     plt.figure(figsize=(12, 6))
 
     # Histogram Sebelum Normalisasi
     plt.subplot(2, 2, 1)
-    plt.hist(original_image.flatten(), bins=256, range=(0, 256), color='b', alpha=0.5)
-    plt.title('Histogram Original Image')
+    plt.hist(img1.flatten(), bins=256, range=(0, 256), color='b', alpha=0.5)
+    plt.title("Histogram "+title1)
     plt.xlabel('Pixel Value')
     plt.ylabel('Frequency')
 
     # Histogram Sesudah Normalisasi
     plt.subplot(2, 2, 2)
-    plt.hist(reconstruct_image.flatten(), bins=256, range=(0, 256), color='r', alpha=0.5)
-    plt.title('Histogram Reconstructed Image')
+    plt.hist(img2.flatten(), bins=256, range=(0, 256), color='r', alpha=0.5)
+    plt.title("Histogram "+title2)
     plt.xlabel('Pixel Value')
     plt.ylabel('Frequency')
 
     # Plot Gambar Asli
     plt.subplot(2, 2, 3)
-    plt.imshow(original_image, cmap='gray')
+    plt.imshow(img1, cmap='gray')
     plt.title('Original Image')
 
     # Plot Hasil Normalisasi
     plt.subplot(2, 2, 4)
-    plt.imshow(reconstruct_image, cmap='gray')
+    plt.imshow(img2, cmap='gray')
     plt.title('Reconstructed Image')
 
     plt.tight_layout()
