@@ -11,7 +11,6 @@ from ..models import BinaryRBM as BaseBinaryRBM
 from ..models import UnsupervisedDBN as BaseUnsupervisedDBN
 from ..utils import batch_generator, to_categorical
 
-
 def close_session():
     sess.close()
 
@@ -28,6 +27,31 @@ def weight_variable(func, shape, stddev, dtype=tf.float32):
 def bias_variable(value, shape, dtype=tf.float32):
     initial = tf.constant(value, shape=shape, dtype=dtype)
     return tf.Variable(initial)
+
+class EarlyStopping:
+    def __init__(self, patience=10, min_delta=0.001):
+        """
+        Args:
+            patience (int): Berapa banyak epoch yang ditunggu tanpa peningkatan sebelum berhenti.
+            min_delta (float): Perbedaan minimal antara error baru dengan error sebelumnya agar dianggap ada peningkatan.
+        """
+        self.patience = patience
+        self.min_delta = min_delta
+        self.best_loss = float('inf')
+        self.wait = 0
+        self.stop = False
+
+    def __call__(self, current_loss):
+        if current_loss < self.best_loss - self.min_delta:
+            self.best_loss = current_loss
+            self.wait = 0
+        else:
+            self.wait += 1
+            if self.wait >= self.patience:
+                self.stop = True
+    
+    def should_stop(self):
+        return self.stop
 
 
 class BaseTensorFlowModel(BaseModel):
@@ -202,6 +226,7 @@ class BinaryRBM(BaseBinaryRBM, BaseTensorFlowModel):
         :param _data: array-like, shape = (n_samples, n_features)
         :return:
         """
+        early_stopping = EarlyStopping(patience=10, min_delta=0.000001)
         for iteration in range(1, self.n_epochs + 1):
             idx = np.random.permutation(len(_data))
             data = _data[idx]
@@ -216,6 +241,13 @@ class BinaryRBM(BaseBinaryRBM, BaseTensorFlowModel):
             if self.verbose:
                 error = self._compute_reconstruction_error(data)
                 print(">> Epoch %d finished \tRBM Reconstruction error %f" % (iteration, error))
+
+                early_stopping(error)
+                
+                if early_stopping.should_stop():
+                    print(f"Training stopped at epoch: {iteration} because of no improvement")
+                    print(f"Best RBM Reconstruction error: {early_stopping.best_loss}")
+                    break
 
     def _compute_hidden_units_matrix(self, matrix_visible_units):
         """

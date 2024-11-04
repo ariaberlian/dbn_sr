@@ -1,7 +1,10 @@
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from scipy.fftpack import dct, idct
+from .visualizer import visualize_dct
 import cv2
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 class DataProcessing:
     def __init__(self):
@@ -40,7 +43,7 @@ class DataProcessing:
 
         return image_restored
 
-    def _normalize_for_rbm(self, patches):
+    def normalize_for_rbm(self, patches):
         """
         Normalisasi gambar untuk dapat dimasukkan ke dalam Restricted Boltzmann Machine (RBM).
         """
@@ -53,11 +56,15 @@ class DataProcessing:
         dct_results_list = np.array(dct_results_list, dtype=np.float64)
         dct_results_list = dct_results_list.reshape(patches.shape)
 
-        print("DCT coefficients shape: ", dct_results_list.shape)
-        # print("This is after DCT: ")
-        # print(dct_results_list[0])
-        # print("After dct max:", np.max(dct_results_list))
-        # print("After dct min:", np.min(dct_results_list))
+        # print("DCT coefficients shape: ", dct_results_list.shape)
+        # print("R",dct_results_list[0,:,:,0])
+        # print("G",dct_results_list[0,:,:,1])
+        # print("B", dct_results_list[0,:,:,2])
+
+        # visualize_dct(dct_results_list[0])
+
+        # print("Dct max:", np.max(dct_results_list))
+        # print("Dct min:", np.min(dct_results_list))
 
 
         # Flatten DCT coefficients for normalization
@@ -77,7 +84,7 @@ class DataProcessing:
         # print("This is after normalization: ", normalized_dct_coefficients[0])
         # Save minimum and maximum values before normalization
 
-        return normalized_dct_coefficients
+        return normalized_dct_coefficients, dct_results_list[0]
 
     def _zigzag(self, input):
         # initializing the variables
@@ -282,7 +289,7 @@ class DataProcessing:
 
         return output
 
-    def preprocess_for_rbm(self, images):
+    def preprocess_for_rbm(self, normalized_patches):
         """
         Persiapkan data untuk dimasukkan ke dalam RBM.
         Image di normalisasi dengan dct sehingga dalam domain frekuensi dengan rentang [0,1]
@@ -291,12 +298,9 @@ class DataProcessing:
         Output: flatten arrays: array-like (Number of patch images, (patch.shape[0] * patch.shape[1] * patch.shape[2]))
         """
 
-        # Normalisasi gambar untuk RBM
-        normalized_coefficients = self._normalize_for_rbm(images)
-
         # Flattening hasil untuk masukan RBM
         flattened_dct_coefficients = [self._zigzag(
-            coeff) for coeff in normalized_coefficients]
+            coeff) for coeff in normalized_patches]
         flattened_dct_coefficients = np.asarray(
             flattened_dct_coefficients, dtype=np.float64)
 
@@ -325,12 +329,14 @@ class DataProcessing:
         # Denormalisasi nilai koefisien
         denormalized_coefficients = self.scaler.inverse_transform(
             reshaped_coefficients.reshape(reshaped_coefficients.shape[0], -1))
+        
 
         # Reshape kembali ke bentuk asli setelah normalisasi
         denormalized_coefficients = denormalized_coefficients.reshape(
             reshaped_coefficients.shape)
 
-        print("Denormalized coeffients array shape: ", denormalized_coefficients.shape)
+        # print("Denormalized coeffients array shape: ", denormalized_coefficients.shape)
+        # visualize_dct(denormalized_coefficients[0])
         # print("This is after denormalize:")
         # # print(denormalized_coefficients[0])
         # print("before idct max:", np.max(denormalized_coefficients))
@@ -345,7 +351,7 @@ class DataProcessing:
         restored_images_list = np.array(restored_images_list, dtype=np.uint8)
         restored_images_list = restored_images_list.reshape(denormalized_coefficients.shape)
 
-        return restored_images_list
+        return restored_images_list, denormalized_coefficients[0]
 
     def get_patches(self, input_image: np.ndarray, patch_size: tuple = (16, 16), stride: tuple = (4, 4)):
         """
@@ -364,8 +370,7 @@ class DataProcessing:
                         input_image[i:i+patch_size[0], j:j+patch_size[1], :])
                 j += stride[1]
             i += stride[0]
-
-        print("Jumlah Patches = ", len(patches))
+            
         patches = np.asarray(patches).reshape(-1,
                                               patch_size[0], patch_size[1], channels)
         # visualize_patches(patches, (8,8))
@@ -400,9 +405,41 @@ class DataProcessing:
         # Pastikan tipe data akhir sesuai dengan kebutuhan
         return reconstructed_image.astype(np.uint8)
 
-    def proccess_output(self, u, r, beta, s):
-        I = u.shape[1]
-        high_freq_start = I//s
+    def proccess_output(self, input, result, interpolation_factor):
+        I = input.shape[1]
+        # high_freq_start = I//interpolation_factor
+        high_freq_start = int(0.25 * I)
         for i in range(high_freq_start, I):
-            u[: ,i] = beta*r[:, i]
-        return u
+            input[: ,i] = result[:, i]
+        return input
+    
+    def standardize_dataset(self, data):
+        """
+        Standardizes the input dataset to have a mean of 0 and a standard deviation of 1.
+
+        Parameters:
+        data (numpy.ndarray): The input dataset to be standardized.
+
+        Returns:
+        numpy.ndarray: The standardized dataset.
+        """
+        mean = np.mean(data, axis=(0, 1, 2), keepdims=True)
+        std_dev = np.std(data, axis=(0, 1, 2), keepdims=True)
+        
+        standardized_data = (data - mean) / std_dev
+        print(standardized_data.shape)
+
+        plt.figure(figsize=(12, 6))
+        sns.histplot(standardized_data[0,:,:,0], bins=50, kde=True, stat="density", linewidth=0)
+
+        plt.axvline(0, color='red', linestyle='--', label='Mean (0)')
+
+        plt.title('Distribusi Data Setelah Standarisasi')
+        plt.xlabel('Nilai Standar')
+        plt.ylabel('Kepadatan')
+        plt.legend()
+        plt.grid()
+
+        # Menampilkan grafik
+        plt.show()
+        return standardized_data

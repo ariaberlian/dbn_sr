@@ -324,7 +324,7 @@ class AbstractSupervisedDBN(BaseEstimator, BaseModel):
         self.p = 1 - self.dropout_p
         self.verbose = verbose
 
-    def fit(self, X, y=None, pre_train=True):
+    def fit(self, XPreTrain, X, y=None, pre_train=True):
         """
         Fits a model given data.
         :param X: array-like, shape = (n_samples, n_features)
@@ -333,7 +333,7 @@ class AbstractSupervisedDBN(BaseEstimator, BaseModel):
         :return:
         """
         if pre_train:
-            self.pre_train(X)
+            self.pre_train(XPreTrain)
         self._fine_tuning(X, y)
         return self
 
