@@ -14,6 +14,7 @@ import os
 
 log_folder = "experiment_logs"
 os.makedirs(log_folder, exist_ok=True)  # Create folder if it doesn't exist
+os.makedirs("model", exist_ok=True)  # Create folder if it doesn't exist
 
 def configure_logging(idx):
     idx += 1
