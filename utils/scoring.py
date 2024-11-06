@@ -1,4 +1,5 @@
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
+from sklearn.metrics import mean_squared_error
 import numpy as np
 
 def calculate_psnr(original_image, enhanced_image):
@@ -21,3 +22,6 @@ def calculate_ssim(original_image, enhanced_image):
     average_ssim = np.mean(ssim_values)
 
     return average_ssim
+
+def calculate_rmse(actual, pred):
+    return np.sqrt(mean_squared_error(actual, pred))
