@@ -153,6 +153,18 @@ class BinaryRBM(BaseBinaryRBM, BaseTensorFlowModel):
                 self.c = bias_variable(stddev, [self.n_hidden_units])
                 self.b = bias_variable(stddev, [self.n_visible_units])
                 self._activation_function_class = tf.nn.relu
+            elif self.activation_function == 'tanh':
+                stddev = 1.0 / np.sqrt(self.n_visible_units)
+                self.W = weight_variable(tf.random_normal, [self.n_hidden_units, self.n_visible_units], stddev=stddev)
+                self.c = weight_variable(tf.random_normal, [self.n_hidden_units], stddev=stddev)
+                self.b = weight_variable(tf.random_normal, [self.n_visible_units], stddev=stddev)
+                self._activation_function_class = tf.nn.tanh
+            elif self.activation_function == 'linear':
+                stddev = 1.0 / np.sqrt(self.n_visible_units)
+                self.W = weight_variable(tf.random_normal, [self.n_hidden_units, self.n_visible_units], stddev=stddev)
+                self.c = weight_variable(tf.random_normal, [self.n_hidden_units], stddev=stddev)
+                self.b = weight_variable(tf.random_normal, [self.n_visible_units], stddev=stddev)
+                self._activation_function_class = tf.identity
             else:
                 raise ValueError("Invalid activation function.")
 
@@ -227,7 +239,7 @@ class BinaryRBM(BaseBinaryRBM, BaseTensorFlowModel):
         :param _data: array-like, shape = (n_samples, n_features)
         :return:
         """
-        early_stopping = EarlyStopping(patience=10, min_delta=0.000001)
+        early_stopping = EarlyStopping(patience=10, min_delta=0.00001)
         for iteration in range(1, self.n_epochs + 1):
             idx = np.random.permutation(len(_data))
             data = _data[idx]
@@ -340,6 +352,16 @@ class TensorFlowAbstractSupervisedDBN(BaseAbstractSupervisedDBN, BaseTensorFlowM
                 self.W = weight_variable(tf.truncated_normal, [self.input_units, self.num_classes], stddev)
                 self.b = bias_variable(stddev, [self.num_classes])
                 self._activation_function_class = tf.nn.relu
+            elif self.unsupervised_dbn.activation_function == 'tanh':
+                stddev = 1.0 / np.sqrt(self.input_units)
+                self.W = weight_variable(tf.random_normal, [self.input_units, self.num_classes], stddev)
+                self.b = weight_variable(tf.random_normal, [self.num_classes], stddev)
+                self._activation_function_class = tf.nn.tanh
+            elif self.unsupervised_dbn.activation_function == 'linear':
+                stddev = 1.0 / np.sqrt(self.input_units)
+                self.W = weight_variable(tf.random_normal, [self.input_units, self.num_classes], stddev)
+                self.b = weight_variable(tf.random_normal, [self.num_classes], stddev)
+                self._activation_function_class = tf.identity
             else:
                 raise ValueError("Invalid activation function.")
 
@@ -415,6 +437,8 @@ class TensorFlowAbstractSupervisedDBN(BaseAbstractSupervisedDBN, BaseTensorFlowM
             print("[END] Fine tuning step")
 
     def _stochastic_gradient_descent(self, data, labels):
+        early_stopping = EarlyStopping(patience=10, min_delta=0.00001)
+
         for iteration in range(self.n_iter_backprop):
             for batch_data, batch_labels in batch_generator(self.batch_size, data, labels):
                 feed_dict = {self.visible_units_placeholder: batch_data,
@@ -427,6 +451,14 @@ class TensorFlowAbstractSupervisedDBN(BaseAbstractSupervisedDBN, BaseTensorFlowM
                 feed_dict.update({placeholder: 1.0 for placeholder in self.keep_prob_placeholders})
                 error = sess.run(self.cost_function, feed_dict=feed_dict)
                 print(">> Epoch %d finished \tANN training loss %f" % (iteration, error))
+                
+                early_stopping(error)
+                
+                if early_stopping.should_stop():
+                    print(f"Training stopped at epoch: {iteration} because of no improvement")
+                    print(f"Best ANN training loss: {early_stopping.best_loss}")
+                    break
+
 
     def transform(self, X):
         feed_dict = {self.visible_units_placeholder: X}
