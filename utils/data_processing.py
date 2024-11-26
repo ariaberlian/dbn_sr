@@ -405,13 +405,16 @@ class DataProcessing:
         # Pastikan tipe data akhir sesuai dengan kebutuhan
         return reconstructed_image.astype(np.uint8)
 
-    def proccess_output(self, input, result, interpolation_factor):
+    def proccess_output(self, input, result):
         I = input.shape[1]
-        # high_freq_start = I//interpolation_factor
+        
         high_freq_start = int(0.25 * I)
-        for i in range(high_freq_start, I):
-            input[: ,i] = result[:, i]
-        return input
+
+        output = np.empty_like(input)
+        output[:, :high_freq_start] = input[:, :high_freq_start]
+        output[:, high_freq_start:] = result[:, high_freq_start:]
+        return output
+
     
     def standardize_dataset(self, data):
         """

@@ -4,23 +4,31 @@ from matplotlib import gridspec
 import matplotlib.pyplot as plt
 
 def visualize4image(image1, title1, image2, title2, image3, title3, image4, title4):
-    fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+    # Set figure dimensions based on the images' combined size
+    fig, axes = plt.subplots(2, 2, figsize=(10, 10))  # Adjust figsize if needed
+
+    # Display each image
     axes[0, 0].imshow(image1)
-    axes[0, 0].axis('off')  
+    axes[0, 0].axis('off')
     axes[0, 0].set_title(title1)
+    axes[0, 0].set_aspect(256 / 256)  # Aspect ratio for 256x256
 
     axes[0, 1].imshow(image2)
     axes[0, 1].axis('off')
     axes[0, 1].set_title(title2)
+    axes[0, 1].set_aspect(512 / 512)  # Aspect ratio for 512x512
 
     axes[1, 0].imshow(image3)
     axes[1, 0].axis('off')
     axes[1, 0].set_title(title3)
+    axes[1, 0].set_aspect(512 / 512)
 
     axes[1, 1].imshow(image4)
     axes[1, 1].axis('off')
     axes[1, 1].set_title(title4)
+    axes[1, 1].set_aspect(512 / 512)
 
+    # Adjust layout to ensure titles and images are spaced correctly
     plt.tight_layout()
     plt.ion()
     plt.show()
