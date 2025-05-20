@@ -1,4 +1,4 @@
-# rbm_sr
+# DBN SR
 `conda create -n dbn_env python=3.6`
 
 `conda activate dbn_env`
