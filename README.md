@@ -5,6 +5,4 @@
 
 `pip install -r clean_requirements.txt`
 
-
-### Problem
-1. Memory leak: setiap epoch semakin lama
+run SRDBN.py
